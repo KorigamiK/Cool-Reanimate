@@ -1,0 +1,67 @@
+name: cool
+version: 0.1.0.0
+github: "KorigamiK/cool"
+license: BSD3
+author: "Kushagra Lakhwani (KorigamiK)"
+maintainer: "korigamik@gmail.com"
+copyright: "2023 Kushagra Lakhwani (KorigamiK)"
+
+extra-source-files:
+  - README.md
+  - CHANGELOG.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description: Please see the README on GitHub at <https://github.com/KorigamiK/cool#readme>
+
+dependencies:
+  - base >= 4.7 && < 5
+  - reanimate >= 1.1.4.0
+  - reanimate-svg >= 0.13.0.1
+  - JuicyPixels
+  - lens
+  - text
+
+ghc-options:
+  - -Wall
+  - -Wcompat
+  - -Widentities
+  - -Wincomplete-record-updates
+  - -Wincomplete-uni-patterns
+  - -Wmissing-export-lists
+  - -Wmissing-home-modules
+  - -Wpartial-fields
+  - -Wredundant-constraints
+
+library:
+  source-dirs: src
+
+executables:
+  cool-exe:
+    main: Main.hs
+    source-dirs: app
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+      # - -fsimpl-tick-factor=N
+      # - -funfolding-case-threshold=N
+      # - -funfolding-case-scaling=N
+    dependencies:
+      - cool
+
+tests:
+  cool-test:
+    main: Spec.hs
+    source-dirs: test
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+    dependencies:
+      - cool
