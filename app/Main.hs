@@ -12,8 +12,8 @@ import           Codec.Picture
 import           Control.Lens                           ((&), (^.))
 import           Control.Monad
 import           Graphics.SvgTree
-import           Lib                                    (nord3, nordPalette)
 import           System.Random
+import           "cool" Lib                                    (nord3, nordPalette)
 import           "random-shuffle" System.Random.Shuffle
 
 main :: IO ()

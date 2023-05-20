@@ -11,8 +11,8 @@ extra-source-files:
   - CHANGELOG.md
 
 # Metadata used when publishing your package
-synopsis:              "A test on the Reanimate package"
-category:              Math, Animation
+synopsis: "A test on the Reanimate package"
+category: Math, Animation
 
 description: Please see the README on GitHub at <https://github.com/KorigamiK/cool-reanimate#readme>
 
@@ -46,6 +46,8 @@ executables:
   cool-exe:
     main: Main.hs
     source-dirs: app
+    other-modules:
+      - Lib
     ghc-options:
       - -threaded
       - -rtsopts
@@ -55,8 +57,8 @@ executables:
       # - -funfolding-case-scaling=N
     dependencies:
       - cool
-    when:        
-      - condition: false        
+    when:
+      - condition: false
         other-modules: Paths_cool
 
 tests:
