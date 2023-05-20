@@ -1,0 +1,10 @@
+cradle:
+  stack:
+    - path: "./src"
+      component: "cool:lib"
+
+    - path: "./app/Main.hs"
+      component: "cool:exe:cool-exe"
+
+    - path: "./test"
+      component: "cool:test:cool-test"

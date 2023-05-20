@@ -1,6 +1,6 @@
 name: cool
 version: 0.1.0.0
-github: "KorigamiK/cool"
+github: "KorigamiK/cool-reanimate"
 license: BSD3
 author: "Kushagra Lakhwani (KorigamiK)"
 maintainer: "korigamik@gmail.com"
@@ -11,13 +11,10 @@ extra-source-files:
   - CHANGELOG.md
 
 # Metadata used when publishing your package
-# synopsis:            Short description of your package
-# category:            Web
+synopsis:              "A test on the Reanimate package"
+category:              Math, Animation
 
-# To avoid duplicated efforts in documentation and dealing with the
-# complications of embedding Haddock markup inside cabal files, it is
-# common to point users to the README.md file.
-description: Please see the README on GitHub at <https://github.com/KorigamiK/cool#readme>
+description: Please see the README on GitHub at <https://github.com/KorigamiK/cool-reanimate#readme>
 
 dependencies:
   - base >= 4.7 && < 5
@@ -26,6 +23,8 @@ dependencies:
   - JuicyPixels
   - lens
   - text
+  - random
+  - random-shuffle
 
 ghc-options:
   - -Wall
@@ -40,6 +39,8 @@ ghc-options:
 
 library:
   source-dirs: src
+  exposed-modules:
+    - Lib
 
 executables:
   cool-exe:
@@ -54,6 +55,9 @@ executables:
       # - -funfolding-case-scaling=N
     dependencies:
       - cool
+    when:        
+      - condition: false        
+        other-modules: Paths_cool
 
 tests:
   cool-test:

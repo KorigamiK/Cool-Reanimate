@@ -1,113 +1,76 @@
 #!/usr/bin/env stack
 -- stack runghc --package reanimate
+{-# LANGUAGE ApplicativeDo     #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE PackageImports    #-}
 
-module Main(main) where
+module Main (main) where
 
-import Reanimate
-import Reanimate.Scene
-import Control.Lens.Operators
-import Codec.Picture (PixelRGBA8(..))
+import           Reanimate
 
-equation :: SVG
-equation = scale 3 $ center $
-    latexAlign "\\textit{\\large K}\\textsl{origami}\\textit{\\large K}"
-
-equationParts :: [SVG]
-equationParts = coloredParts
-    where parts = [snd (splitGlyphs [x] equation) | x <- [0..8]]
-          colors = withFillColorPixel <$>
-              [nord7, nord9, nord11, nord13, nord15, nord8, nord10, nord12, nord7]
-          coloredParts = [ color part
-                         | (color, part) <- zip colors parts]
-
-background :: SVG
-background = mkBackgroundPixel nord0
-
-environment :: Animation -> Animation
-environment = addStatic background
-    . mapA (withStrokeWidth 0)
-
-centerItem :: Duration -> SVG -> Animation
-centerItem time svg = scene $ do
-    let goCenter t = do
-            oCenterX %= \origin -> fromToS origin 0 t
-            oCenterY %= \origin -> fromToS origin 0 t
-
-    item <- oNew svg
-    oShow item
-    oTweenS item time goCenter
-
-fadeInEulerIdentity :: Animation
-fadeInEulerIdentity = environment
-    $ pauseAtEnd 0.5
-    $ applyE (overEnding 1 fadeOutE)
-        $ pauseAtEnd 2
-        $ seqA
-            ( setDuration 5
-            $ foldl1 andThen [applyE fillInE $ staticFrame 1 part
-                             | part <- equationParts])
-            ( seqA (pauseAtEnd 0.5
-                   $ foldl1 parA $ staticFrame 1 (head equationParts)
-                   : [applyE fadeOutE $ staticFrame 1 part
-                     | part <- tail equationParts])
-                   (centerItem 2 $ head equationParts))
+import           Codec.Picture
+import           Control.Lens                           ((&), (^.))
+import           Control.Monad
+import           Graphics.SvgTree
+import           Lib                                    (nord3, nordPalette)
+import           System.Random
+import           "random-shuffle" System.Random.Shuffle
 
 main :: IO ()
-main = reanimate fadeInEulerIdentity
+main = reanimate $ addStatic bg latexExample
+  where
+    bg = mkBackgroundPixel (PixelRGBA8 46 52 64 255)
 
--- Nord Color Palette
-nord0 :: PixelRGBA8
-nord0 = PixelRGBA8 46 52 64 255
+latexExample :: Animation
+latexExample = scene $ do
+     -- Fading text
+    -- let textSvg = withFillColorPixel nord11 $ translate (-5.75) 0 $ scale 1 $ latex "\\Large \\textit{Gaussian Integral}"
+    -- play $ animate (\t -> withFillOpacity (1 - t*0.8) textSvg)
+    --   & applyE (overBeginning 5 fadeOutE)
 
-nord1 :: PixelRGBA8
-nord1 = PixelRGBA8 59 66 82 255
+    -- Draw equation
+    forM_ glyphs $ \(fn, _, elt) ->
+      newSpriteSVG $ withFillColorPixel nord3 $ fn elt
+    play $ drawAnimation strokedSvg
+    forM_ glyphs $ \(fn, _, elt) ->
+      newSpriteSVG $ withFillColorPixel nord3 $ fn elt
 
-nord2 :: PixelRGBA8
-nord2 = PixelRGBA8 67 76 94 255
+    -- Undraw equations
+    play $ drawAnimation' (Just 0xdeadbeef) 1 0.1 strokedSvg
+      & reverseA
+    wait 1
+  where
+    glyphs = svgGlyphs svg
+    strokedSvg =
+      withStrokeWidth (defaultStrokeWidth*0.5) $
+      withStrokeColor "white" svg
+      -- the gaussian integral
+    svg = lowerTransformations $ simplify $ scale 2 $ center $
+      latexAlign "\\int^{\\infty}_{-\\infty} e^{-x^{2}} = \\sqrt{\\pi}"
 
-nord3 :: PixelRGBA8
-nord3 = PixelRGBA8 76 86 106 255
+drawAnimation :: SVG -> Animation
+drawAnimation = drawAnimation' Nothing 0.5 0.3
 
-nord4 :: PixelRGBA8
-nord4 = PixelRGBA8 216 222 233 255
+drawAnimation' :: Maybe Int -> Double -> Double -> SVG -> Animation
+drawAnimation' mbSeed fillDur step svg = scene $ do
+  forM_ (zip [0..] $ shuf $ zip (svgGlyphs svg) nordPalette) $ \(n, ((fn, attr, tree), color)) -> do
+    let sWidth =
+          case toUserUnit defaultDPI <$> (attr ^. strokeWidth) of
+            Just (Num d) -> d
+            _unspecifiedWidth            -> defaultStrokeWidth
+    fork $ do
+      wait (n*step)
+      play $ mapA (withFillColorPixel color . fn) (animate (\t -> withFillOpacity 0 $ partialSvg t tree)
+        & applyE (overEnding fillDur $ fadeLineOutE sWidth))
+    fork $ do
+      wait (n*step+(1-fillDur))
+      newSprite $ do
+        t <- spriteT
+        return $
+          withStrokeWidth 0 $ withFillOpacity (min 1 $ t/fillDur) (withFillColorPixel color $ fn tree)
+  where
+    shuf lst =
+      case mbSeed of
+        Nothing   -> lst
+        Just seed -> shuffle' lst (length lst) (mkStdGen seed)
 
-nord5 :: PixelRGBA8
-nord5 = PixelRGBA8 229 233 240 255
-
-nord6 :: PixelRGBA8
-nord6 = PixelRGBA8 236 239 244 255
-
-nord7 :: PixelRGBA8
-nord7 = PixelRGBA8 143 188 187 255
-
-nord8 :: PixelRGBA8
-nord8 = PixelRGBA8 136 192 208 255
-
-nord9 :: PixelRGBA8
-nord9 = PixelRGBA8 129 161 193 255
-
-nord10 :: PixelRGBA8
-nord10 = PixelRGBA8 94 129 172 255
-
-nord11 :: PixelRGBA8
-nord11 = PixelRGBA8 191 97 106 255
-
-nord12 :: PixelRGBA8
-nord12 = PixelRGBA8 208 135 112 255
-
-nord13 :: PixelRGBA8
-nord13 = PixelRGBA8 235 203 139 255
-
-nord14 :: PixelRGBA8
-nord14 = PixelRGBA8 163 190 140 255
-
-nord15 :: PixelRGBA8
-nord15 = PixelRGBA8 180 142 173 255
-
-nordPalette :: [PixelRGBA8]
-nordPalette = [ nord0,  nord1,  nord2,  nord3
-              , nord4,  nord5,  nord6,  nord7
-              , nord8,  nord9,  nord10, nord11
-              , nord12, nord13, nord14, nord15 ]
